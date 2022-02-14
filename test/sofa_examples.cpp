@@ -2,6 +2,8 @@
 #include <cstdio>
 
 using namespace iers2010;
+using dso::Mat3x3;
+using dso::Vector3;
 
 /// ----------------------------------------------------------------------------
 /// Examples are taken from:
@@ -29,29 +31,29 @@ double ex4_result[3][3] = {
   {0.000711560162594e0, 0.000046626402444e0, 0.999999745754024e0} 
 };
 
-void print_rotmat(const RotationMatrix3 &mat, const char *header=nullptr) noexcept {
+void print_rotmat(const Mat3x3 &mat, const char *header=nullptr) noexcept {
   if (header) printf("%s\n", header);
   for (int r = 0; r < 3; r++) {
     printf("|");
     for (int j = 0; j < 3; j++) {
-      printf(" %+18.15f ", mat.data[r][j]);
+      printf(" %+18.15f ", mat(r,j));
     }
     printf("|\n");
   }
   printf("\n");
 }
 
-RotationMatrix3 absdif(const RotationMatrix3 &mat, const double rot[3][3]) {
-  RotationMatrix3 diff;
+Mat3x3 absdif(const Mat3x3 &mat, const double rot[3][3]) {
+  Mat3x3 diff;
   for (int row=0; row<3; row++) {
     for (int col=0; col<3; col++) {
-      diff.data[row][col] = std::abs(mat.data[row][col] - rot[row][col]);
+      diff(row,col) = std::abs(mat(row,col) - rot[row][col]);
     }
   }
   return diff;
 }
 
-RotationMatrix3 c2t06a(double tt1, double tt2, double ut11, double ut12,
+Mat3x3 c2t06a(double tt1, double tt2, double ut11, double ut12,
                        double xp, double yp) noexcept {
   using namespace iers2010::sofa;
 
@@ -72,7 +74,7 @@ RotationMatrix3 c2t06a(double tt1, double tt2, double ut11, double ut12,
 }
 
 // IAU 2000A, CIO based, using classical angles
-RotationMatrix3
+Mat3x3
     iau00a_cio(double tt1, double tt2, double ut11, double ut12, double xp,
                double yp, double dx00, double dy00) noexcept {
   // ====================
@@ -95,7 +97,7 @@ RotationMatrix3
   double era = era00(ut11, ut12);
 
   // Form celestial-terrestrial matrix (no polar motion yet).
-  RotationMatrix3 rc2ti = c2ixys(x, y, s);
+  Mat3x3 rc2ti = c2ixys(x, y, s);
   rc2ti.rotz(era);
   // print_rotmat(rc2ti, "Celestial to terrestrial matrix (no polar motion)");
 
@@ -108,7 +110,7 @@ RotationMatrix3
 }
 
 // IAU 2000A, equinox based, using classical angles
-RotationMatrix3 iau00a_eq(double tt1, double tt2, double ut11, double ut12,
+Mat3x3 iau00a_eq(double tt1, double tt2, double ut11, double ut12,
                           double xp, double yp, double dx00,
                           double dy00) noexcept {
   // ========================
@@ -122,7 +124,7 @@ RotationMatrix3 iau00a_eq(double tt1, double tt2, double ut11, double ut12,
 
   // Precession-nutation quantities, IAU 2000.
   double epsa;
-  RotationMatrix3 rb, rp, rpb, rn, rnpb;
+  Mat3x3 rb, rp, rpb, rn, rnpb;
   pn00(tt1, tt2, dp00, de00, epsa, rb, rp, rpb, rn, rnpb);
 
   // Transform dX,dY corrections from GCRS to mean of date.
@@ -159,7 +161,7 @@ RotationMatrix3 iau00a_eq(double tt1, double tt2, double ut11, double ut12,
 }
 
 // IAU 2006/2000A, CIO based, using classical angles
-RotationMatrix3 iau06a_eq(double tt1, double tt2, double ut11, double ut12,
+Mat3x3 iau06a_eq(double tt1, double tt2, double ut11, double ut12,
                           double xp, double yp, double dx06,
                           double dy06) noexcept {
   // ========================= //
@@ -196,7 +198,7 @@ RotationMatrix3 iau06a_eq(double tt1, double tt2, double ut11, double ut12,
 }
 
 // IAU 2006/2000A, CIO based, using X,Y series
-RotationMatrix3 iau06c_eq(double tt1, double tt2, double ut11, double ut12,
+Mat3x3 iau06c_eq(double tt1, double tt2, double ut11, double ut12,
                           double xp, double yp, double dx06,
                           double dy06) noexcept {
   // =========================================== //

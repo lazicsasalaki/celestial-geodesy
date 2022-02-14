@@ -20,6 +20,26 @@ num_cpu = int(os.environ.get('NUM_CPU', 2))
 SetOption('num_jobs', num_cpu)
 print("running with -j %s" % GetOption('num_jobs'))
 
+## choose compiler from command line, e.g. '--cxx=clang++'
+AddOption('--cxx',
+          dest='cxx',
+          type='string',
+          nargs=1,
+          action='store',
+          metavar='CXX',
+          help='C++ Compiler',
+          default=None)
+
+## choose compiler from command line, e.g. '--std=20'
+AddOption('--std',
+          dest='std',
+          type='string',
+          nargs=1,
+          action='store',
+          metavar='STD',
+          help='C++ Standard [11/14/17/20]',
+          default='17')
+
 ## Source files (for lib)
 lib_src_files = glob.glob(r"src/*.cpp")
 
@@ -27,14 +47,21 @@ lib_src_files = glob.glob(r"src/*.cpp")
 hdr_src_files = glob.glob(r"src/*.hpp")
 
 ## Environments ...
-denv = Environment(CXXFLAGS='-std=c++17 -g -pg -Wall -Wextra -Werror -pedantic -W -Wshadow -Winline -Wdisabled-optimization -DDEBUG')
-penv = Environment(CXXFLAGS='-std=c++17 -Wall -Wextra -Werror -pedantic -W -Wshadow -Winline -O2 -march=native')
+denv = Environment(CXXFLAGS='-g -pg -Wall -Wextra -Werror -pedantic -W -Wshadow -Winline -Wdisabled-optimization -DDEBUG')
+penv = Environment(CXXFLAGS='-Wall -Wextra -Werror -pedantic -W -Wshadow -Winline -O2 -march=native')
 
 ## Command line arguments ...
 debug = ARGUMENTS.get('debug', 0)
 
 ## Construct the build enviroment
 env = denv.Clone() if int(debug) else penv.Clone()
+
+## What compiler should we be using ?
+if GetOption('cxx') is not None: env['CXX'] = GetOption('cxx')
+
+## Set the C++ standard
+cxxstd = GetOption('std')
+env.Append(CXXFLAGS=' --std=c++{}'.format(cxxstd))
 
 ## (shared) library ...
 vlib = env.SharedLibrary(source=lib_src_files, target=lib_name, CPPPATH=['.'], SHLIBVERSION=lib_version)

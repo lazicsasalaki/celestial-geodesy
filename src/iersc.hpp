@@ -10,7 +10,7 @@ constexpr double DPI = 3.141592653589793238462643e0;
 constexpr double D2PI = 6.283185307179586476925287e0;
 
 /// @brief Arcseconds in a full circle
-constexpr double TURNAS  =1296000e0;
+constexpr double TURNAS = 1296000e0;
 
 /// @brief Arcseconds to radians
 constexpr double DAS2R = 4.848136811095359935899141e-6;
@@ -37,10 +37,11 @@ constexpr double DJM00 = 51544.5e0;
 /// @param[in] angle Angle in radians
 /// @return Angle in radians in range [0,2pi)
 inline double nang_02pi(double angle) noexcept {
-    double w = std::fmod(angle, iers2010::D2PI);
-    if (w<0e0) w += iers2010::D2PI;
-    return w;
+  double w = std::fmod(angle, iers2010::D2PI);
+  if (w < 0e0)
+    w += iers2010::D2PI;
+  return w;
 }
-}// iers2010
+} // namespace iers2010
 
 #endif

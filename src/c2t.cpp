@@ -1,10 +1,8 @@
 #include "iau.hpp"
 #include "iersc.hpp"
 
-iers2010::RotationMatrix3 iers2010::sofa::c2t06a(double tta, double ttb,
-                                                 double uta, double utb,
-                                                 double xp,
-                                                 double yp) noexcept {
+dso::Mat3x3 iers2010::sofa::c2t06a(double tta, double ttb, double uta,
+                                   double utb, double xp, double yp) noexcept {
 
   // Form the celestial-to-intermediate matrix for this TT.
   auto rc2i = iers2010::sofa::c2i06a(tta, ttb);
@@ -22,24 +20,22 @@ iers2010::RotationMatrix3 iers2010::sofa::c2t06a(double tta, double ttb,
   return iers2010::sofa::c2tcio(rc2i, era, rpom);
 }
 
-iers2010::RotationMatrix3
-iers2010::sofa::c2tcio(const iers2010::RotationMatrix3 &rc2i, double era,
-                       const iers2010::RotationMatrix3 &rpom) noexcept {
+dso::Mat3x3 iers2010::sofa::c2tcio(const dso::Mat3x3 &rc2i, double era,
+                                   const dso::Mat3x3 &rpom) noexcept {
   auto rc2t = rc2i;
   rc2t.rotz(era);
   return rpom * rc2t;
 }
 
-iers2010::RotationMatrix3 iers2010::sofa::c2i06a(double date1,
-                                                 double date2) noexcept {
+dso::Mat3x3 iers2010::sofa::c2i06a(double date1, double date2) noexcept {
 
   // Obtain the celestial-to-true matrix (IAU 2006/2000A).
   auto rbpn = iers2010::sofa::pnm06a(date1, date2);
 
   // Extract the X,Y coordinates.
   // iauBpn2xy(rbpn, &x, &y);
-  const double x = rbpn.data[2][0];
-  const double y = rbpn.data[2][1];
+  const double x = rbpn.data /*[2][0]*/[6];
+  const double y = rbpn.data /*[2][1]*/[7];
 
   // Obtain the CIO locator.
   const double s = iers2010::sofa::s06(date1, date2, x, y);
@@ -48,8 +44,7 @@ iers2010::RotationMatrix3 iers2010::sofa::c2i06a(double date1,
   return iers2010::sofa::c2ixys(x, y, s);
 }
 
-iers2010::RotationMatrix3 iers2010::sofa::pnm06a(double date1,
-                                                 double date2) noexcept {
+dso::Mat3x3 iers2010::sofa::pnm06a(double date1, double date2) noexcept {
 
   double gamb, phib, psib, epsa;
   // Fukushima-Williams angles for frame bias and precession.
@@ -63,10 +58,9 @@ iers2010::RotationMatrix3 iers2010::sofa::pnm06a(double date1,
   return iers2010::sofa::fw2m(gamb, phib, psib + dp, epsa + de);
 }
 
-iers2010::RotationMatrix3 iers2010::sofa::fw2m(double gamb, double phib,
-                                               double psi,
-                                               double eps) noexcept {
-  iers2010::RotationMatrix3 r;
+dso::Mat3x3 iers2010::sofa::fw2m(double gamb, double phib, double psi,
+                                 double eps) noexcept {
+  dso::Mat3x3 r;
   r.rotz(gamb);
   r.rotx(phib);
   r.rotz(-psi);
@@ -74,10 +68,9 @@ iers2010::RotationMatrix3 iers2010::sofa::fw2m(double gamb, double phib,
   return r;
 }
 
-iers2010::RotationMatrix3 iers2010::sofa::pom00(double xp, double yp,
-                                                double sp) noexcept {
+dso::Mat3x3 iers2010::sofa::pom00(double xp, double yp, double sp) noexcept {
   // initialize to identity matrix
-  iers2010::RotationMatrix3 rpom;
+  dso::Mat3x3 rpom;
   // apply three rotations ... W(t) = R3(−sp) x R2(xp) x R1(yp),
   rpom.rotz(sp);
   rpom.roty(-xp);
@@ -92,17 +85,16 @@ double iers2010::sofa::sp00(double date1, double date2) noexcept {
   return -47e-6 * t * iers2010::DAS2R;
 }
 
-iers2010::RotationMatrix3 iers2010::sofa::numat(double epsa, double dpsi,
-                                                double deps) noexcept {
-  iers2010::RotationMatrix3 rmatn;
+dso::Mat3x3 iers2010::sofa::numat(double epsa, double dpsi,
+                                  double deps) noexcept {
+  dso::Mat3x3 rmatn;
   rmatn.rotx(epsa);
   rmatn.rotz(-dpsi);
   rmatn.rotx(-(epsa + deps));
   return rmatn;
 }
 
-iers2010::RotationMatrix3 iers2010::sofa::num06a(double date1,
-                                                 double date2) noexcept {
+dso::Mat3x3 iers2010::sofa::num06a(double date1, double date2) noexcept {
   // Mean obliquity.
   const double eps = iers2010::sofa::obl06(date1, date2);
 
@@ -114,29 +106,28 @@ iers2010::RotationMatrix3 iers2010::sofa::num06a(double date1,
   return iers2010::sofa::numat(eps, dp, de);
 }
 
-double iers2010::sofa::eors(iers2010::RotationMatrix3 &rnpb,
-                            double s) noexcept {
+double iers2010::sofa::eors(dso::Mat3x3 &rnpb, double s) noexcept {
   // Evaluate Wallace & Capitaine (2006) expression (16).
-  const double x = rnpb.data[2][0];
-  const double ax = x / (1e0 + rnpb.data[2][2]);
+  const double x = rnpb.data /*[2][0]*/[6];
+  const double ax = x / (1e0 + rnpb.data /*[2][2]*/[8]);
   const double xs = 1e0 - ax * x;
-  const double ys = -ax * rnpb.data[2][1];
+  const double ys = -ax * rnpb.data /*[2][1]*/[7];
   const double zs = -x;
-  const double p =
-      rnpb.data[0][0] * xs + rnpb.data[0][1] * ys + rnpb.data[0][2] * zs;
-  const double q =
-      rnpb.data[1][0] * xs + rnpb.data[1][1] * ys + rnpb.data[1][2] * zs;
+  const double p = rnpb.data /*[0][0]*/[0] * xs + rnpb.data /*[0][1]*/[1] * ys +
+                   rnpb.data /*[0][2]*/[2] * zs;
+  const double q = rnpb.data /*[1][0]*/[3] * xs + rnpb.data /*[1][1]*/[4] * ys +
+                   rnpb.data /*[1][2]*/[5] * zs;
   const double eo = ((p != 0) || (q != 0)) ? s - std::atan2(q, p) : s;
 
   return eo;
 }
 
 double iers2010::sofa::gst06(double uta, double utb, double tta, double ttb,
-             iers2010::RotationMatrix3 &rnpb) noexcept {
+                             dso::Mat3x3 &rnpb) noexcept {
   // Extract CIP coordinates.
   // iauBpn2xy(rnpb, &x, &y);
-  const double x = rnpb.data[2][0];
-  const double y = rnpb.data[2][1];
+  const double x = rnpb.data /*[2][0]*/[6];
+  const double y = rnpb.data /*[2][1]*/[7];
 
   // The CIO locator, s.
   const double s = iers2010::sofa::s06(tta, ttb, x, y);
@@ -144,7 +135,7 @@ double iers2010::sofa::gst06(double uta, double utb, double tta, double ttb,
   // Greenwich apparent sidereal time.
   const double era = iers2010::sofa::era00(uta, utb);
   const double eors = iers2010::sofa::eors(rnpb, s);
-  return iers2010::nang_02pi(era-eors);
+  return iers2010::nang_02pi(era - eors);
 }
 
 void iers2010::sofa::xys00a(double date1, double date2, double &x, double &y,
@@ -154,8 +145,8 @@ void iers2010::sofa::xys00a(double date1, double date2, double &x, double &y,
 
   // Extract X,Y.
   // iauBpn2xy(rbpn, x, y);
-  x = rbpn.data[2][0];
-  y = rbpn.data[2][1];
+  x = rbpn.data /*[2][0]*/[6];
+  y = rbpn.data /*[2][1]*/[7];
 
   // Obtain s.
   s = s00(date1, date2, x, y);
@@ -163,7 +154,8 @@ void iers2010::sofa::xys00a(double date1, double date2, double &x, double &y,
   return;
 }
 
-void iers2010::sofa::pr00(double date1, double date2, double &dpsipr, double &depspr) noexcept {
+void iers2010::sofa::pr00(double date1, double date2, double &dpsipr,
+                          double &depspr) noexcept {
   // Precession and obliquity corrections (radians per century)
   constexpr double PRECOR = -0.29965e0 * iers2010::DAS2R;
   constexpr double OBLCOR = -0.02524e0 * iers2010::DAS2R;
@@ -176,7 +168,8 @@ void iers2010::sofa::pr00(double date1, double date2, double &dpsipr, double &de
   depspr = OBLCOR * t;
 }
 
-void iers2010::sofa::bi00(double &dpsibi, double &depsbi, double &dra) noexcept {
+void iers2010::sofa::bi00(double &dpsibi, double &depsbi,
+                          double &dra) noexcept {
   // The frame bias corrections in longitude and obliquity
   constexpr double DPBIAS = -0.041775e0 * DAS2R;
   constexpr double DEBIAS = -0.0068192e0 * DAS2R;
@@ -190,13 +183,13 @@ void iers2010::sofa::bi00(double &dpsibi, double &depsbi, double &dra) noexcept 
   dra = DRA0;
 }
 
-void iers2010::sofa::bp00(double date1, double date2, RotationMatrix3 &rb, RotationMatrix3 &rp,
-          RotationMatrix3 &rbp) noexcept {
+void iers2010::sofa::bp00(double date1, double date2, dso::Mat3x3 &rb,
+                          dso::Mat3x3 &rp, dso::Mat3x3 &rbp) noexcept {
   // J2000.0 obliquity (Lieske et al. 1977)
-  constexpr double EPS0 = 84381.448e0 * iers2010::DAS2R;
+  constexpr double EPS0 = 84'381.448e0 * iers2010::DAS2R;
 
-  //double t, dpsibi, depsbi, dra0, psia77, oma77, chia, dpsipr, depspr, psia,
-  //    oma, rbw[3][3];
+  // double t, dpsibi, depsbi, dra0, psia77, oma77, chia, dpsipr, depspr, psia,
+  //     oma, rbw[3][3];
 
   // Interval between fundamental epoch J2000.0 and current date (JC).
   const double t = ((date1 - iers2010::DJ00) + date2) / iers2010::DJC;
@@ -206,7 +199,7 @@ void iers2010::sofa::bp00(double date1, double date2, RotationMatrix3 &rb, Rotat
   iers2010::sofa::bi00(dpsibi, depsbi, dra0);
 
   // Precession angles (Lieske et al. 1977)
-  const double psia77 = (5038.7784e0 + (-1.07259e0 + (-0.001147e0) * t) * t) *
+  const double psia77 = (5'038.7784e0 + (-1.07259e0 + (-0.001147e0) * t) * t) *
                         t * iers2010::DAS2R;
   const double oma77 =
       EPS0 + ((0.05127e0 + (-0.007726e0) * t) * t) * t * iers2010::DAS2R;
@@ -237,11 +230,9 @@ void iers2010::sofa::bp00(double date1, double date2, RotationMatrix3 &rb, Rotat
 }
 
 void iers2010::sofa::pn00(double date1, double date2, double dpsi, double deps,
-                          double &epsa, iers2010::RotationMatrix3 &rb,
-                          iers2010::RotationMatrix3 &rp,
-                          iers2010::RotationMatrix3 &rbp,
-                          iers2010::RotationMatrix3 &rn,
-                          iers2010::RotationMatrix3 &rbpn) noexcept {
+                          double &epsa, dso::Mat3x3 &rb, dso::Mat3x3 &rp,
+                          dso::Mat3x3 &rbp, dso::Mat3x3 &rn,
+                          dso::Mat3x3 &rbpn) noexcept {
   // IAU 2000 precession-rate adjustments.
   double dpsipr, depspr;
   iers2010::sofa::pr00(date1, date2, dpsipr, depspr);
@@ -260,13 +251,13 @@ void iers2010::sofa::pn00(double date1, double date2, double dpsi, double deps,
 }
 
 void iers2010::sofa::xys06a(double date1, double date2, double &x, double &y,
-            double &s) noexcept {
+                            double &s) noexcept {
   // Form the bias-precession-nutation matrix, IAU 2006/2000A
   auto rbpn = pnm06a(date1, date2);
 
   // Extract X,Y.
-  x = rbpn.data[2][0];
-  y = rbpn.data[2][1];
+  x = rbpn.data /*[2][0]*/[6];
+  y = rbpn.data /*[2][1]*/[7];
   // iauBpn2xy(rbpn, x, y);
 
   // Obtain s.

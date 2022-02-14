@@ -1,7 +1,7 @@
 #include "iau.hpp"
 #include "iersc.hpp"
-#include <cmath>
 #include <algorithm>
+#include <cmath>
 
 double iers2010::sofa::era00(double dj1, double dj2) noexcept {
   double d1 = dj1;

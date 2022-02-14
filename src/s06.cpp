@@ -5,7 +5,7 @@ typedef struct {
   int nfa[8];  // coefficients of l,l',F,D,Om,LVe,LE,pA
   double s, c; // sine and cosine coefficients
 } TERM;
-  
+
 // The series for s+XY/2 t^N, for N=0, ..., 4
 
 // Terms of order t^0
@@ -116,7 +116,7 @@ constexpr int NS3 = (int)(sizeof s3 / sizeof(TERM));
 constexpr int NS4 = (int)(sizeof s4 / sizeof(TERM));
 
 double iers2010::sofa::s06(double date1, double date2, double x,
-                          double y) noexcept {
+                           double y) noexcept {
 
   // Polynomial coefficients
   constexpr double sp[] = {// 1-6
@@ -194,7 +194,8 @@ double iers2010::sofa::s06(double date1, double date2, double x,
     w4 += s4[i].s * std::sin(a) + s4[i].c * std::cos(a);
   }
 
-  double s = (w0 + (w1 + (w2 + (w3 + (w4 + w5 * t) * t) * t) * t) * t) * iers2010::DAS2R -
+  double s = (w0 + (w1 + (w2 + (w3 + (w4 + w5 * t) * t) * t) * t) * t) *
+                 iers2010::DAS2R -
              x * y / 2e0;
 
   // Finished.
