@@ -38,6 +38,16 @@ struct Vector3 {
     data[1] /= norm;
     data[2] /= norm;
   }
+  constexpr Vector3 operator-(const Vector &v) const noexcept {
+    return {{data[0]-v.data[0], data[1]-v.data[1], data[2]-v.data[2]}};
+  }
+  constexpr Vector3 operator/(double scalar) const noexcept {
+    return {{data[0]/scalar, data[1]/scalar, data[2]/scalar}};
+  }
+  constexpr Vector3 operator*(double scalar) const noexcept {
+    return {{data[0]*scalar, data[1]*scalar, data[2]*scalar}};
+  }
+
 };
 
 struct Mat3x3 {
